@@ -1,5 +1,5 @@
 @echo off
-cd /d "C:\Users\dhruv\OneDrive\Documents\Git hub\lms-crm-complete.tar\lms-crm"
+cd /d "%~dp0"
 
 echo [1/3] Stopping old servers...
 taskkill /F /IM node.exe 2>nul
