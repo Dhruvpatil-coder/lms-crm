@@ -1,0 +1,25 @@
+-- CreateTable
+CREATE TABLE "OnlineSession" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "title" TEXT NOT NULL,
+    "description" TEXT,
+    "videoUrl" TEXT NOT NULL,
+    "thumbnailUrl" TEXT,
+    "domain" TEXT,
+    "course" TEXT,
+    "batchId" INTEGER,
+    "trainerName" TEXT,
+    "trainerId" INTEGER,
+    "sessionDate" DATETIME,
+    "duration" TEXT,
+    "tags" TEXT,
+    "visibility" TEXT NOT NULL DEFAULT 'all',
+    "isPublished" BOOLEAN NOT NULL DEFAULT true,
+    "views" INTEGER NOT NULL DEFAULT 0,
+    "isDeleted" BOOLEAN NOT NULL DEFAULT false,
+    "createdById" INTEGER,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "OnlineSession_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "User" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT "OnlineSession_trainerId_fkey" FOREIGN KEY ("trainerId") REFERENCES "User" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT "OnlineSession_batchId_fkey" FOREIGN KEY ("batchId") REFERENCES "Batch" ("id") ON DELETE SET NULL ON UPDATE CASCADE
+);

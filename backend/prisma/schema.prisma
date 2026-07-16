@@ -1,0 +1,284 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             Int      @id @default(autoincrement())
+  name           String
+  email          String   @unique
+  hashedPassword String
+  role           String   @default("hr") // admin | | trainer
+  phone          String?
+  district       String?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+
+  companiesCreated    Company[]
+  candidatesTraining  Candidate[]         @relation("TrainerCandidates")
+  followUpsCreated    CandidateFollowUp[]
+  attendance          TrainerAttendance[]
+  batches             Batch[]
+  chatMessages        ChatMessage[]
+  sessionsCreated     OnlineSession[] @relation("SessionsCreated")
+  trainerSessions     OnlineSession[] @relation("TrainerSessions")
+  schedulesCreated    Schedule[]      @relation("SchedulesCreated")
+  trainerSchedules    Schedule[]      @relation("TrainerSchedules")
+  donorsCreated       Donor[] @relation("DonorCreated")
+  managedDonors       Donor[] @relation("DonorManager")
+}
+
+model Company {
+  id               Int       @id @default(autoincrement())
+  companyName      String
+  email            String?
+  address          String?
+  district         String?
+  block            String?
+  domain           String?
+  contactPerson    String?
+  contactNumber    String?
+  totalVacancies   Int       @default(0)
+  urgentHiring   Boolean   @default(false)
+  lastFollowupDate DateTime?
+  nextFollowupDate DateTime?
+  remarks          String?
+  isNewClient      Boolean   @default(false)
+  isDeleted        Boolean   @default(false)
+  createdAt        DateTime  @default(now())
+  createdById      Int?
+  donorId          Int?
+
+  createdBy  User?       @relation(fields: [createdById], references: [id])
+  donor      Donor?      @relation(fields: [donorId], references: [id])
+  jobFairs   JobFair[]
+  placements Placement[]
+}
+
+model JobFair {
+  id           Int       @id @default(autoincrement())
+  eventName    String
+  companies    String?   // comma-separated company names
+  companyId    Int?      // deprecated, keep for compatibility
+  district     String?
+  block        String?
+  venue        String?
+  vacancyCount Int       @default(0)
+  domain       String?   // free text, not dropdown
+  startDate    DateTime?
+  endDate      DateTime?
+  coordinator  String?   // comma-separated coordinator names
+  status       String    @default("Upcoming")
+  isDeleted    Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+
+  company Company? @relation(fields: [companyId], references: [id])
+}
+
+model Candidate {
+  id               Int       @id @default(autoincrement())
+  candidateId      String    @unique
+  fullName         String
+  mobileNumber     String?
+  alternateNumber  String?
+  email            String?
+  gender           String?
+  dateOfBirth      DateTime?
+  state            String?
+  district         String?
+  block            String?
+  address          String?
+  qualification    String?
+  course           String?
+  batch            String?
+  domain           String?
+  trainerId        Int?
+  donorId          Int?
+  batchStartDate   DateTime?
+  batchEndDate     DateTime?
+  month            String?     // Month of enrollment
+  whatsappNumber   String?     // WhatsApp number
+  caste            String?     // Caste category
+  aadharCard       String?     // Aadhar card number
+  beforeCourseEmploymentStatus String? @default("Unemployed") // Employment before course
+  batchStatus      String?     @default("Ongoing") // Ongoing, Completed, Dropped
+  employmentAfterCourse String? @default("Unemployed") // Employment after course completion
+  companyAddress   String?     // Company/business address
+  businessName     String?     // Self business name
+  monthlyEarning   Float?      // Monthly earning after course
+  document         String?     // Document/file URL
+  helper           String?     // Helper/mentor name
+  placementStatus  String    @default("Interested")
+  lastFollowupDate DateTime?
+  nextFollowupDate DateTime?
+  salary           Float?     // placement salary
+  location         String?    // job location
+  companyName      String?    // placed company
+  remark           String?    // general remark
+  isDeleted        Boolean   @default(false)
+  createdAt        DateTime  @default(now())
+
+  trainer    User?               @relation("TrainerCandidates", fields: [trainerId], references: [id])
+  donor      Donor?              @relation(fields: [donorId], references: [id])
+  followups  CandidateFollowUp[]
+  placements Placement[]
+}
+
+model CandidateFollowUp {
+  id               Int       @id @default(autoincrement())
+  candidateId      Int
+  followupDate     DateTime?
+  nextFollowupDate DateTime?
+  status           String?
+  remark           String?
+  createdById      Int?
+  createdAt        DateTime  @default(now())
+
+  candidate  Candidate @relation(fields: [candidateId], references: [id])
+  createdBy  User?     @relation(fields: [createdById], references: [id])
+}
+
+model TrainerAttendance {
+  id           Int       @id @default(autoincrement())
+  trainerId    Int
+  date         DateTime
+  checkinTime  DateTime?
+  checkoutTime DateTime?
+  vdcName      String?
+  district     String?
+  block        String?
+  activityType String?
+  workDetails  String?
+
+  trainer User @relation(fields: [trainerId], references: [id])
+
+  @@unique([trainerId, date])
+}
+
+model Batch {
+  id            Int       @id @default(autoincrement())
+  batchName     String
+  course        String?
+  domain        String?
+  trainerId     Int?
+  startDate     DateTime?
+  endDate       DateTime?
+  district      String?
+  block         String?
+  vdcName       String?
+  totalStudents Int       @default(0)
+  status        String    @default("Active")
+  createdAt     DateTime  @default(now())
+
+  trainer  User?           @relation(fields: [trainerId], references: [id])
+  sessions OnlineSession[]
+  schedules Schedule[]     @relation("BatchSchedules")
+}
+
+model Donor {
+  id          Int       @id @default(autoincrement())
+  name        String
+  organization String?
+  contactPerson String?
+  email       String?
+  phone       String?
+  district    String?
+  block       String?
+  domain      String?
+  date        DateTime?
+  remarks     String?
+  isActive    Boolean   @default(true)
+  isDeleted   Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  createdById Int?
+  managerId   Int?
+
+  createdBy  User?       @relation("DonorCreated", fields: [createdById], references: [id])
+  manager    User?       @relation("DonorManager", fields: [managerId], references: [id])
+  companies  Company[]
+  candidates Candidate[]
+}
+
+model ChatMessage {
+  id        Int      @id @default(autoincrement())
+  senderId  Int
+  content   String
+  isDeleted Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  sender User @relation(fields: [senderId], references: [id])
+}
+
+model Placement {
+  id          Int       @id @default(autoincrement())
+  candidateId Int
+  companyId   Int
+  jobRole     String?
+  joiningDate DateTime?
+  salary      Float?
+  district    String?
+  block       String?
+  domain      String?
+  status      String    @default("Joined")
+  createdAt   DateTime  @default(now())
+
+  candidate Candidate @relation(fields: [candidateId], references: [id])
+  company   Company   @relation(fields: [companyId], references: [id])
+}
+
+model OnlineSession {
+  id           Int       @id @default(autoincrement())
+  title        String
+  description  String?
+  videoUrl     String                        // YouTube / Drive / direct URL
+  thumbnailUrl String?
+  domain       String?
+  course       String?
+  batchId      Int?
+  trainerName  String?
+  trainerId    Int?
+  sessionDate  DateTime?
+  duration     String?                       // e.g. "1h 30m"
+  tags         String?                       // comma-separated
+  visibility   String    @default("all")     // all | batch | domain
+  isPublished  Boolean   @default(true)
+  views        Int       @default(0)
+  isDeleted    Boolean   @default(false)
+  createdById  Int?
+  createdAt    DateTime  @default(now())
+
+  createdBy User?  @relation("SessionsCreated", fields: [createdById], references: [id])
+  trainer   User?  @relation("TrainerSessions",  fields: [trainerId],   references: [id])
+  batch     Batch? @relation(fields: [batchId], references: [id])
+}
+
+model Schedule {
+  id           Int       @id @default(autoincrement())
+  title        String
+  description  String?
+  scheduleType String    @default("Class")   // Class | Session | Assessment | Meeting | Event | Other
+  startDateTime DateTime
+  endDateTime   DateTime?
+  allDay        Boolean  @default(false)
+  domain       String?
+  course       String?
+  batchId      Int?
+  trainerId    Int?
+  trainerName  String?
+  venue        String?                        // physical or online link
+  meetingLink  String?                        // Zoom / Meet / Teams link
+  status       String    @default("Scheduled") // Scheduled | Ongoing | Completed | Cancelled | Postponed
+  priority     String    @default("Normal")   // High | Normal | Low
+  reminderSent Boolean   @default(false)
+  isDeleted    Boolean   @default(false)
+  createdById  Int?
+  createdAt    DateTime  @default(now())
+
+  createdBy User?  @relation("SchedulesCreated", fields: [createdById], references: [id])
+  trainer   User?  @relation("TrainerSchedules", fields: [trainerId],   references: [id])
+  batch     Batch? @relation("BatchSchedules",   fields: [batchId],     references: [id])
+}
